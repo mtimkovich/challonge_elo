@@ -5,6 +5,7 @@ import challonge
 import config
 from datetime import datetime, timedelta
 import json
+import logging
 from mako.template import Template
 import mechanize
 import os
@@ -16,8 +17,11 @@ DATE_STR = '%Y-%m-%d'
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--html', action='store_true', help='Output to html page')
-parser.add_argument('-v', '--verbose', action='store_true', help='Print debug messages')
+parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
 args = parser.parse_args()
+
+if args.verbose:
+    logging.basicConfig(level=logging.INFO)
 
 class Player:
     def title(self, name):
@@ -73,8 +77,7 @@ def get_all_tournaments(start_urls):
     for start_url in start_urls:
         br.open(start_url)
 
-        if args.verbose:
-            print 'Getting all tournament ids for ' + start_url
+        logging.info('Getting all tournament ids for ' + start_url)
 
         done = False
         while not done:
@@ -129,25 +132,17 @@ tournaments = {}
 
 for tournament_id in tournament_ids:
     if tournament_id not in cached_tournaments:
-        if args.verbose:
-            print tournament_id + ': Getting matches'
+        logging.info(tournament_id + ': Getting matches')
 
         matches = challonge.matches.index(tournament_id)
         participants = challonge.participants.index(tournament_id)
 
         with open(os.path.join(CACHE, tournament_id), 'w') as f:
             json.dump({'matches': matches, 'participants': participants}, f, default=json_serial)
+
+        cached_tournaments.add(tournament_id)
     else:
-        if args.verbose:
-            print tournament_id + ': in cache, skipping'
-
-    # with open(os.path.join(CACHE, tournament_id)) as f:
-    #     raw = json.load(f)
-
-    #     tournaments[tournament_id] = {
-    #             'matches': raw['matches'],
-    #             'participants': raw['participants']
-    #     }
+        logging.info(tournament_id + ': in cache, skipping')
 
 for tournament_id in cached_tournaments:
     with open(os.path.join(CACHE, tournament_id)) as f:
@@ -225,9 +220,7 @@ for player in sorted(active_players, key=lambda p: p.old_rating(), reverse=True)
         i += 1
 
 if not args.html:
-    if args.verbose:
-        print
-        print '=== Results ==='
+    logging.info('=== Results ===')
 
     for player in active_players:
         print '{}. {} ({:.2f})'.format(player.rank, player.name, player.rating.mu)
