@@ -15,7 +15,7 @@ import trueskill
 CACHE = 'cache'
 DATE_STR = '%Y-%m-%d'
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(description='Create Elo rankings from Challonge brackets')
 parser.add_argument('--html', action='store_true', help='Output to html page')
 parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
 parser.add_argument('--cache', action='store_true', help="Don't fetch from web, just use results in cache")
