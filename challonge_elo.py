@@ -18,6 +18,7 @@ DATE_STR = '%Y-%m-%d'
 parser = argparse.ArgumentParser()
 parser.add_argument('--html', action='store_true', help='Output to html page')
 parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
+parser.add_argument('--cache', action='store_true', help="Don't fetch from web, just use results in cache")
 args = parser.parse_args()
 
 if args.verbose:
@@ -111,12 +112,14 @@ def json_serial(obj):
         return serial
     raise TypeError('Type not serializable')
 
-tournament_ids = get_all_tournaments([
-    'http://{}.challonge.com/'.format(config.subdomain),
-    # 'http://challonge.com/users/' + config.subdomain
-])
+if not args.cache:
+    tournament_ids = get_all_tournaments([
+        'http://{}.challonge.com/'.format(config.subdomain),
+        # 'http://challonge.com/users/' + config.subdomain
+    ])
 
-tournament_ids.append('idnlvvlz')
+    tournament_ids.append('idnlvvlz')
+    tournament_ids.append('showdowngg-SDHS31')
 
 cached_tournaments = set()
 
@@ -124,25 +127,26 @@ if not os.path.exists(CACHE):
     os.makedirs(CACHE)
 else:
     cached_tournaments = set(os.listdir(CACHE))
-
-challonge.set_credentials(config.user, config.api_key)
-
-players = {}
+   
 tournaments = {}
+players = {}
 
-for tournament_id in tournament_ids:
-    if tournament_id not in cached_tournaments:
-        logging.info(tournament_id + ': Getting matches')
+if not args.cache:
+    challonge.set_credentials(config.user, config.api_key)
 
-        matches = challonge.matches.index(tournament_id)
-        participants = challonge.participants.index(tournament_id)
+    for tournament_id in tournament_ids:
+        if tournament_id not in cached_tournaments:
+            logging.info(tournament_id + ': Getting matches')
 
-        with open(os.path.join(CACHE, tournament_id), 'w') as f:
-            json.dump({'matches': matches, 'participants': participants}, f, default=json_serial)
+            matches = challonge.matches.index(tournament_id)
+            participants = challonge.participants.index(tournament_id)
 
-        cached_tournaments.add(tournament_id)
-    else:
-        logging.info(tournament_id + ': in cache, skipping')
+            with open(os.path.join(CACHE, tournament_id), 'w') as f:
+                json.dump({'matches': matches, 'participants': participants}, f, default=json_serial)
+
+            cached_tournaments.add(tournament_id)
+        else:
+            logging.info(tournament_id + ': in cache, skipping')
 
 for tournament_id in cached_tournaments:
     with open(os.path.join(CACHE, tournament_id)) as f:
@@ -220,8 +224,6 @@ for player in sorted(active_players, key=lambda p: p.old_rating(), reverse=True)
         i += 1
 
 if not args.html:
-    logging.info('=== Results ===')
-
     for player in active_players:
         print '{}. {} ({:.2f})'.format(player.rank, player.name, player.rating.mu)
 else:
