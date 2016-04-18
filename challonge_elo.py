@@ -45,7 +45,8 @@ class Player:
             'swerve': 'djswerve',
             'ravels': 'gravels',
             'ltigre': 'elteegrey',
-            'azunin': 'azurin'
+            'azunin': 'azurin',
+            'ftw': 'exul'
         }
 
         if name in corrections:
@@ -120,6 +121,8 @@ if not args.cache:
 
     tournament_ids.append('idnlvvlz')
     tournament_ids.append('showdowngg-SDHS31')
+    tournament_ids.append('showdowngg-SDHS32')
+    tournament_ids.append('showdowngg-SDHS33')
 
 cached_tournaments = set()
 
