@@ -123,6 +123,7 @@ if not args.cache:
     tournament_ids.append('showdowngg-SDHS31')
     tournament_ids.append('showdowngg-SDHS32')
     tournament_ids.append('showdowngg-SDHS33')
+    tournament_ids.append('showdowngg-SDHS34')
 
 cached_tournaments = set()
 
