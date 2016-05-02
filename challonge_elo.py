@@ -77,6 +77,17 @@ class Player:
             self.record[other][result] = 0
         self.record[other][result] += 1
 
+    def filter_record(self, active_players_dict):
+        inactive = []
+        for player in self.record:
+            if player not in active_players_dict:
+                inactive.append(player)
+
+        for player in inactive:
+            del self.record[player]
+
+        return self.record
+
     def __init__(self, participant):
         self.rating = trueskill.Rating()
         self.previous_rating = None
@@ -234,6 +245,7 @@ for n, id in enumerate(sorted(tournaments, key=lambda x: str2date(tournaments[x]
         last_updated = matches[0]['created-at']
 
 active_players = []
+active_players_dict = {}
 
 i = 1
 for player in sorted(players, key=lambda name: players[name].rating, reverse=True):
@@ -243,6 +255,7 @@ for player in sorted(players, key=lambda name: players[name].rating, reverse=Tru
     if datetime.today() - str2date(player.last_played) < timedelta(weeks=4):
         player.rank = i
         active_players.append(player)
+        active_players_dict[player.name] = player
         i += 1
 
 i = 1
@@ -251,10 +264,15 @@ for player in sorted(active_players, key=lambda p: p.old_rating(), reverse=True)
         player.previous_rank = i
         i += 1
 
+matchup_records = {}
+for player in active_players:
+    matchup_records[player.name] = player.filter_record(active_players_dict)
+with open('player_matchups.json', 'w') as f:
+    json.dump(matchup_records, f)
+
 if not args.html:
     for player in active_players:
         print '{}. {} ({:.2f})'.format(player.rank, player.name, player.rating.mu)
-        print player.record
 else:
     template = Template(filename='template.html')
     print template.render(players=active_players, last_updated=last_updated)
