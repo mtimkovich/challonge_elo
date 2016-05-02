@@ -88,6 +88,13 @@ class Player:
 
         return self.record
 
+    def win_percent(self):
+        wins = sum(result['win'] for result in self.record.values() if 'win' in result)
+        losses = sum(result['loss'] for result in self.record.values() if 'loss' in result)
+        self.win_pct = wins/float(wins + losses) * 100.
+
+        return self.win_pct
+
     def __init__(self, participant):
         self.rating = trueskill.Rating()
         self.previous_rating = None
@@ -96,6 +103,7 @@ class Player:
         self.new = False
         self.last_played = participant['created-at']
         self.record = {}
+        self.win_pct = 0
 
         self.name = self.clean_up(participant['name'])
 
@@ -267,6 +275,7 @@ for player in sorted(active_players, key=lambda p: p.old_rating(), reverse=True)
 matchup_records = {}
 for player in active_players:
     matchup_records[player.name] = player.filter_record(active_players_dict)
+    matchup_records[player.name]['win_pct'] = player.win_percent()
 with open('player_matchups.json', 'w') as f:
     json.dump(matchup_records, f)
 
