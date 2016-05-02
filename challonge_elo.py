@@ -62,6 +62,21 @@ class Player:
         else:
             return self.rating
 
+    def add_match(self, winner, loser):
+        if self.name == winner:
+            result = 'win'
+            other = loser
+        else:
+            result = 'loss'
+            other = winner
+
+        if other not in self.record:
+            self.record[other] = {}
+
+        if result not in self.record[other]:
+            self.record[other][result] = 0
+        self.record[other][result] += 1
+
     def __init__(self, participant):
         self.rating = trueskill.Rating()
         self.previous_rating = None
@@ -69,6 +84,7 @@ class Player:
         self.previous_rank = -1
         self.new = False
         self.last_played = participant['created-at']
+        self.record = {}
 
         self.name = self.clean_up(participant['name'])
 
@@ -115,10 +131,12 @@ def json_serial(obj):
     raise TypeError('Type not serializable')
 
 if not args.cache:
-    tournament_ids = get_all_tournaments([
-        'http://{}.challonge.com/'.format(config.subdomain),
-        # 'http://challonge.com/users/' + config.subdomain
-    ])
+    # tournament_ids = get_all_tournaments([
+    #     # 'http://{}.challonge.com/'.format(config.subdomain),
+    #     # 'http://challonge.com/users/' + config.subdomain
+    # ])
+
+    tournament_ids = []
 
     tournament_ids.append('idnlvvlz')
     tournament_ids.append('showdowngg-SDHS31')
@@ -200,8 +218,12 @@ for n, id in enumerate(sorted(tournaments, key=lambda x: str2date(tournaments[x]
 
         if winner == one:
             players[one].rating, players[two].rating = trueskill.rate_1vs1(players[one].rating, players[two].rating)
+            players[one].add_match(one, two)
+            players[two].add_match(one, two)
         else:
             players[two].rating, players[one].rating = trueskill.rate_1vs1(players[two].rating, players[one].rating)
+            players[one].add_match(two, one)
+            players[two].add_match(two, one)
 
     if n == len(tournaments) - 2:
         for name in players:
@@ -232,6 +254,7 @@ for player in sorted(active_players, key=lambda p: p.old_rating(), reverse=True)
 if not args.html:
     for player in active_players:
         print '{}. {} ({:.2f})'.format(player.rank, player.name, player.rating.mu)
+        print player.record
 else:
     template = Template(filename='template.html')
     print template.render(players=active_players, last_updated=last_updated)
