@@ -47,7 +47,8 @@ class Player:
             'ltigre': 'elteegrey',
             'azunin': 'azurin',
             'ftw': 'exul',
-            'alvn': 'alvin'
+            'alvn': 'alvin',
+            'rzr milk': 'milk'
         }
 
         if name in corrections:
@@ -91,17 +92,20 @@ class Player:
     def win_percent(self):
         wins = sum(result['win'] for result in self.record.values() if 'win' in result)
         losses = sum(result['loss'] for result in self.record.values() if 'loss' in result)
-        self.win_pct = wins/float(wins + losses) * 100.
+        if wins + losses != 0:
+            self.win_pct = wins/float(wins + losses) * 100.
+        else:
+            self.win_pct = 0
 
         return self.win_pct
 
-    def __init__(self, participant):
+    def __init__(self, participant, tournament_num):
         self.rating = trueskill.Rating()
         self.previous_rating = None
         self.rank = -1
         self.previous_rank = -1
         self.new = False
-        self.last_played = participant['created-at']
+        self.last_played = tournament_num
         self.record = {}
         self.win_pct = 0
 
@@ -163,6 +167,8 @@ if not args.cache:
     tournament_ids.append('showdowngg-SDHS33')
     tournament_ids.append('showdowngg-SDHS34')
     tournament_ids.append('showdowngg-SDHS35')
+    tournament_ids.append('showdowngg-SDHS36')
+    tournament_ids.append('showdowngg-SDHS37')
 
 cached_tournaments = set()
 
@@ -200,8 +206,7 @@ for tournament_id in cached_tournaments:
             'participants': raw['participants']
         }
 
-last_updated = None
-
+tournament_num = 1
 for n, id in enumerate(sorted(tournaments, key=lambda x: str2date(tournaments[x]['matches'][0]['created-at']))):
     tournament = tournaments[id]
     matches = tournament['matches']
@@ -210,7 +215,7 @@ for n, id in enumerate(sorted(tournaments, key=lambda x: str2date(tournaments[x]
     tag = {}
 
     for p in participants:
-        new_player = Player(p)
+        new_player = Player(p, tournament_num)
         name = new_player.name
 
         if name not in players:
@@ -220,7 +225,6 @@ for n, id in enumerate(sorted(tournaments, key=lambda x: str2date(tournaments[x]
                 players[name].new = True
         else:
             players[name].last_played = max(players[name].last_played, new_player.last_played)
-            last_updated = new_player.last_played
 
         tag[p['id']] = name
 
@@ -249,8 +253,9 @@ for n, id in enumerate(sorted(tournaments, key=lambda x: str2date(tournaments[x]
             player = players[name]
             player.previous_rating = player.rating
 
-    if n == len(tournaments) - 1 and last_updated is None:
-        last_updated = matches[0]['created-at']
+    tournament_num += 1
+
+tournament_num -= 1
 
 active_players = []
 active_players_dict = {}
@@ -259,8 +264,8 @@ i = 1
 for player in sorted(players, key=lambda name: players[name].rating, reverse=True):
     player = players[player]
 
-    # Remove inactive players after 4 weeks
-    if datetime.today() - str2date(player.last_played) < timedelta(weeks=4):
+    # Remove inactive players after n tournaments
+    if tournament_num - player.last_played <= 4:
         player.rank = i
         active_players.append(player)
         active_players_dict[player.name] = player
@@ -284,4 +289,4 @@ if not args.html:
         print '{}. {} ({:.2f})'.format(player.rank, player.name, player.rating.mu)
 else:
     template = Template(filename='template.html')
-    print template.render(players=active_players, last_updated=last_updated)
+    print template.render(players=active_players)
