@@ -154,21 +154,16 @@ def json_serial(obj):
     raise TypeError('Type not serializable')
 
 if not args.cache:
+    # Challonge is blocking these calls on my machine, some I'm doing it manually
     # tournament_ids = get_all_tournaments([
     #     # 'http://{}.challonge.com/'.format(config.subdomain),
     #     # 'http://challonge.com/users/' + config.subdomain
     # ])
 
-    tournament_ids = []
-
-    tournament_ids.append('idnlvvlz')
-    tournament_ids.append('showdowngg-SDHS31')
-    tournament_ids.append('showdowngg-SDHS32')
-    tournament_ids.append('showdowngg-SDHS33')
-    tournament_ids.append('showdowngg-SDHS34')
-    tournament_ids.append('showdowngg-SDHS35')
-    tournament_ids.append('showdowngg-SDHS36')
-    tournament_ids.append('showdowngg-SDHS37')
+    tournament_ids_file = 'tournament_ids.txt'
+    if os.path.isfile(tournament_ids_file):
+        with open(tournament_ids_file) as f:
+            tournament_ids = [line.strip() for line in f]
 
 cached_tournaments = set()
 
