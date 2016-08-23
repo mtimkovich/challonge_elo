@@ -29,6 +29,12 @@ $json = json_decode($file, true);
 if (isset($_GET['name'])) {
 	$player = $_GET['name'];
 } else {
+	print "<title>Players</title>";
+	print "<b>Player</b><br>";
+	ksort($json);
+	foreach ($json as $name => $val) {
+		print "<a href='matchups.php?name=$name'>$name</a><br>";
+	}
 	exit();
 }
 
@@ -40,6 +46,8 @@ if (!isset($json[$player])) {
 }
 
 $matchups = $json[$player];
+
+print "<title>$player</title>";
 
 print "<b>$player</b> (". round($json[$player]['win_pct'], 2) ."%)";
 print '<br>';
