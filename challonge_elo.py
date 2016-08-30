@@ -59,9 +59,9 @@ class Player:
 
     def old_rating(self):
         if self.previous_rating is not None:
-            return self.previous_rating
+            return self.elo(self.previous_rating)
         else:
-            return self.rating
+            return self.elo()
 
     def add_match(self, winner, loser):
         if self.name == winner:
@@ -98,6 +98,11 @@ class Player:
             self.win_pct = 0
 
         return self.win_pct
+
+    def elo(self, rating=None):
+        if rating is None:
+            rating = self.rating
+        return rating.mu - 3 * rating.sigma
 
     def __init__(self, participant, tournament_num):
         self.rating = trueskill.Rating()
@@ -256,7 +261,7 @@ active_players = []
 active_players_dict = {}
 
 i = 1
-for player in sorted(players, key=lambda name: players[name].rating, reverse=True):
+for player in sorted(players, key=lambda name: players[name].elo(), reverse=True):
     player = players[player]
 
     # Remove inactive players after n tournaments
@@ -281,7 +286,7 @@ with open('player_matchups.json', 'w') as f:
 
 if not args.html:
     for player in active_players:
-        print '{}. {} ({:.2f})'.format(player.rank, player.name, player.rating.mu)
+        print '{}. {} ({:.2f})'.format(player.rank, player.name, player.elo())
 else:
     template = Template(filename='template.html')
     print template.render(players=active_players)
