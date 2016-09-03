@@ -47,7 +47,7 @@
         </span>
       % endif
     </td>
-    <td>${'{:.2f}'.format(player.rating.mu)}</td>
+    <td>${'{:.2f}'.format(player.elo())}</td>
   </tr>
   %endfor
 </table>

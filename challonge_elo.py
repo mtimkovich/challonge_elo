@@ -21,6 +21,8 @@ parser.add_argument('--html', action='store_true', help='Output to html page')
 parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
 args = parser.parse_args()
 
+trueskill.setup(draw_probability=0)
+
 if args.verbose:
     logging.basicConfig(level=logging.INFO)
 
@@ -72,10 +74,8 @@ class Player:
             other = winner
 
         if other not in self.record:
-            self.record[other] = {}
+            self.record[other] = {'win': 0, 'loss': 0}
 
-        if result not in self.record[other]:
-            self.record[other][result] = 0
         self.record[other][result] += 1
 
     def filter_record(self, active_players_dict):
@@ -102,7 +102,7 @@ class Player:
     def elo(self, rating=None):
         if rating is None:
             rating = self.rating
-        return rating.mu - 3 * rating.sigma
+        return trueskill.expose(rating)
 
     def __init__(self, participant, tournament_num):
         self.rating = trueskill.Rating()
