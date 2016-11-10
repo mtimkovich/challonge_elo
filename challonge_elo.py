@@ -265,7 +265,7 @@ for player in sorted(players, key=lambda name: players[name].elo(), reverse=True
     player = players[player]
 
     # Remove inactive players after n tournaments
-    if tournament_num - player.last_played <= 4:
+    if tournament_num - player.last_played <= 3:
         player.rank = i
         active_players.append(player)
         active_players_dict[player.name] = player
